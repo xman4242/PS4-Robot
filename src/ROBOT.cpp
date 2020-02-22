@@ -73,13 +73,19 @@ int LeftSetpoint = 0;
 int RightSetpoint = 0;
 int LiftSetpoint = 0;
 bool EnableVal = false;
+int _NextControllerMillis = 0;
 
 
 void ROBOT::Loop()
 {
     //Read The Controller
     //READXBOX();
-    READPS4();
+    if(_NextControllerMillis < millis())
+    {
+         READPS4();
+        _NextControllerMillis = millis() + 5;
+    }
+    
     
     if(digitalRead(_Button0) == LOW)
     {
@@ -150,13 +156,28 @@ void ROBOT::Loop()
             Yukon.OLED.display();
         }
         
+        else if(AutoRunning)
+        {
+             Yukon.OLED.clearDisplay();
+            Yukon.OLED.setCursor(0, 0);
+            Yukon.OLED.setTextSize(2);
+            Yukon.OLED.print("Running");
+            //Yukon.OLED.println(EnableVal);
+            Yukon.OLED.setTextSize(1);
+            Yukon.OLED.print(AutonNum);
+            Yukon.OLED.display();
+        }
+        
         else
         {
             Yukon.OLED.clearDisplay();
             Yukon.OLED.setCursor(0, 0);
-            Yukon.OLED.setTextSize(2);
+            Yukon.OLED.setTextSize(1);
             Yukon.OLED.println("MOSTLY");
             Yukon.OLED.println("HARMLESS");
+            Yukon.OLED.print("Battery = ");
+            Yukon.OLED.print(PS4.data.status.battery, DEC);
+            Yukon.OLED.println(" / 16");
             Yukon.OLED.display();
         }
     }
@@ -164,7 +185,11 @@ void ROBOT::Loop()
 
 void ROBOT::Auton1()
 {   
-    TurnforEnc(90, 150);
+    ResetEnc();
+    //DriveForEnc(24,-150);
+    Drive.ForAsync(3000, -200,- 200,100);
+    ResetEnc();
+    DriveForEnc(24, 150);
     EndAuton();
 }
 
@@ -213,11 +238,11 @@ void ROBOT::DriveForEnc(float Inches, int16_t Speed)
     {
     while(RightEnc.read() > Distance || LeftEnc.read() > Distance)
     {   
-        if(RightEnc.read() > RightSetpoint)
+        if(RightEnc.read() > Distance)
         {
             DriveRight.SetMotorSpeed(Speed);
         }
-        if(LeftEnc.read() > LeftSetpoint)
+        if(LeftEnc.read() > Distance)
         {
             DriveLeft.SetMotorSpeed(Speed);
         }
@@ -359,7 +384,7 @@ void ROBOT::READXBOX()
         }
 
         if (Xbox.getButtonClick(LEFT))
-        AutonNum--;
+        AutonNum--; 
         if (Xbox.getButtonClick(RIGHT))
         AutonNum++;
         if (Xbox.getButtonClick(DOWN))
@@ -397,12 +422,12 @@ void ROBOT::READPS4()
             Claw.OISetSpeed(ClawSpeed);
             
 
-            if(_NextModeMillis < millis())
-            {   
+ 
                 if(PS4.data.button.circle == 1)
                 {
                     PrecisionMode = !PrecisionMode;
                 }
+
                 if(PS4.data.button.share)
                 {
                     Armed = !Armed;
@@ -413,12 +438,18 @@ void ROBOT::READPS4()
                     DebugMode = !DebugMode;
                 }
 
+                if(PS4.data.button.up)
+                {
+                    AutoRunning = true;
+                }
+
                  if(PrecisionMode)
                 {
                 DriveLeftSpeed = PS4.data.analog.stick.ly;
                 DriveRightSpeed = PS4.data.analog.stick.ry;
                 PS4.setLed(0,0,255);
                 }
-                _NextModeMillis = millis() + 100;
-            }
+            
+
+            
 }

@@ -70,7 +70,7 @@ class ROBOT
     int PreviousError = 0;
     int PreviousSensorReading = 0;
     int NegativeSide = 3;
-    bool DebugMode = true;
+    bool DebugMode = false;
   
     
     
