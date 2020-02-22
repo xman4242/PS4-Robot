@@ -27,9 +27,7 @@ void AUTONOMOUS::Loop()
 
 void AUTONOMOUS::ExecAuton1()
 {
-    Robot.Drive.ForAsync(2000, -255, -255, 100);
-    Robot.Drive.ForAsync(2000, 255, 255, 100);
-
+    Robot.DriveForEnc(24,150);
 }
 void AUTONOMOUS::ExecAuton2()
 {

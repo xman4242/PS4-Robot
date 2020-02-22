@@ -95,6 +95,7 @@ void ROBOT::Loop()
     }
     //Read The Sensors
     EnableVal = digitalRead(EnablePin);
+    State.AutonLightSensorActive = EnableVal;
     Yukon.DisableWatchdog();
     
     if((Armed && EnableVal) || AutoRunning == true)
@@ -144,15 +145,15 @@ void ROBOT::Loop()
             Yukon.OLED.println(LiftEnc.read());
             Yukon.OLED.display();
         }
-        else if (Armed)
+        else if (Auton.IsArmed())
         {
             Yukon.OLED.clearDisplay();
             Yukon.OLED.setCursor(0, 0);
             Yukon.OLED.setTextSize(2);
-            Yukon.OLED.print("ARMED ");
+            Yukon.OLED.print("ARMED");
             //Yukon.OLED.println(EnableVal);
             Yukon.OLED.setTextSize(1);
-            Yukon.OLED.print(AutonNum);
+            Yukon.OLED.print(Auton.QueuedProgramName());
             Yukon.OLED.display();
         }
         
@@ -187,7 +188,11 @@ void ROBOT::Auton1()
 {   
     ResetEnc();
     //DriveForEnc(24,-150);
-    Drive.ForAsync(3000, -200,- 200,100);
+    DriveRight.SetMotorSpeed(-200); 
+    DriveLeft.SetMotorSpeed(-200);
+    delay(3500);
+    DriveLeft.SetMotorSpeed(0);
+    DriveRight.SetMotorSpeed(0); 
     ResetEnc();
     DriveForEnc(24, 150);
     EndAuton();
@@ -428,9 +433,19 @@ void ROBOT::READPS4()
                     PrecisionMode = !PrecisionMode;
                 }
 
-                if(PS4.data.button.share)
+                if(PS4.data.button.down)
                 {
-                    Armed = !Armed;
+                    Auton.ToggleArmed();
+                }
+
+                if(PS4.data.button.right)
+                {
+                    Auton.QueueNext();
+                }
+
+                if(PS4.data.button.left)
+                {
+                    Auton.QueuePrev();
                 }
 
                 if(PS4.data.button.options)
@@ -447,7 +462,6 @@ void ROBOT::READPS4()
                 {
                 DriveLeftSpeed = PS4.data.analog.stick.ly;
                 DriveRightSpeed = PS4.data.analog.stick.ry;
-                PS4.setLed(0,0,255);
                 }
             
 
