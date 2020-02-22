@@ -98,21 +98,11 @@ void ROBOT::Loop()
     State.AutonLightSensorActive = EnableVal;
     Yukon.DisableWatchdog();
     
-    if((Armed && EnableVal) || AutoRunning == true)
+    if((EnableVal) && AutoRunning == true)
     {
         if(AutonNum ==1)
         Auton1();
-
-        if(AutonNum == 2)
-        Auton2();
-
-        if(AutonNum == 3)
-        Auton3();
-
-        if(AutonNum == 4)
-        Auton4();
-
-        Armed = false;
+        AutoRunning == false;
     }
 
         LeftPos = (LeftEnc.read())*-1;
@@ -145,7 +135,7 @@ void ROBOT::Loop()
             Yukon.OLED.println(LiftEnc.read());
             Yukon.OLED.display();
         }
-        else if (Auton.IsArmed())
+        else if (Armed)
         {
             Yukon.OLED.clearDisplay();
             Yukon.OLED.setCursor(0, 0);
@@ -153,7 +143,7 @@ void ROBOT::Loop()
             Yukon.OLED.print("ARMED");
             //Yukon.OLED.println(EnableVal);
             Yukon.OLED.setTextSize(1);
-            Yukon.OLED.print(Auton.QueuedProgramName());
+            Yukon.OLED.print(AutonNum);
             Yukon.OLED.display();
         }
         
@@ -190,7 +180,7 @@ void ROBOT::Auton1()
     //DriveForEnc(24,-150);
     DriveRight.SetMotorSpeed(-200); 
     DriveLeft.SetMotorSpeed(-200);
-    delay(3500);
+    delay(3000);
     DriveLeft.SetMotorSpeed(0);
     DriveRight.SetMotorSpeed(0); 
     ResetEnc();
@@ -433,27 +423,27 @@ void ROBOT::READPS4()
                     PrecisionMode = !PrecisionMode;
                 }
 
-                if(PS4.data.button.down)
+                if(PS4.data.button.down == 1)
                 {
                     Auton.ToggleArmed();
                 }
 
-                if(PS4.data.button.right)
+                if(PS4.data.button.right == 1)
                 {
                     Auton.QueueNext();
                 }
 
-                if(PS4.data.button.left)
+                if(PS4.data.button.left == 1)
                 {
                     Auton.QueuePrev();
                 }
 
-                if(PS4.data.button.options)
+                if(PS4.data.button.options == 1)
                 {
                     DebugMode = !DebugMode;
                 }
 
-                if(PS4.data.button.up)
+                if(PS4.data.button.up == 1)
                 {
                     AutoRunning = true;
                 }

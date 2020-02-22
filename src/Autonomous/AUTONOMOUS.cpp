@@ -31,13 +31,13 @@ void AUTONOMOUS::ExecAuton1()
 }
 void AUTONOMOUS::ExecAuton2()
 {
-    Robot.Lift.ForAsync(500, 127, 100);
+    
 }
 void AUTONOMOUS::ExecAuton3()
 {
-    Robot.Drive.ForAsync(3000, 127, 127, 100);
+
 }
 void AUTONOMOUS::ExecAuton4()
 {
-    Robot.Drive.ForAsync(3000, 127, 127, 100);
+    
 }
