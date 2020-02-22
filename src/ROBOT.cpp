@@ -50,7 +50,7 @@ int16_t LiftSpeed = 0;
 int16_t ClawSpeed = 0;
 bool winning = true;
 int _NextModeMillis = 0;
-bool Armed = true;
+bool Armed = false;
 bool AutoRunning = false;
 int AutonNum = 1;
 long OldLeftPos = -999;
@@ -81,15 +81,15 @@ void ROBOT::Loop()
     //READXBOX();
     READPS4();
     
-        if(digitalRead(_Button0) == LOW)
-        {
-            digitalWrite(_LEDBuiltIn, HIGH);
-            Yukon.SetupWIFI();
-            delay(1000);
-        }
-     //Read The Sensors
-     EnableVal = digitalRead(EnablePin);
-     Yukon.DisableWatchdog();
+    if(digitalRead(_Button0) == LOW)
+    {
+        digitalWrite(_LEDBuiltIn, HIGH);
+        Yukon.SetupWIFI();
+        delay(1000);
+    }
+    //Read The Sensors
+    EnableVal = digitalRead(EnablePin);
+    Yukon.DisableWatchdog();
     
     if((Armed && EnableVal) || AutoRunning == true)
     {
@@ -105,31 +105,12 @@ void ROBOT::Loop()
         if(AutonNum == 4)
         Auton4();
 
-        AutoRunning = true;
         Armed = false;
     }
 
         LeftPos = (LeftEnc.read())*-1;
         RightPos = (RightEnc.read())*-1;
-        LiftPos = LiftEnc.read();
-
-       
-
-        if (LeftPos != OldLeftPos)
-        {
-            OldLeftPos = LeftPos;
-        }
-        
-        if(RightPos != OldRightPos)
-        {
-            OldRightPos = RightPos;
-        }
-
-        if(LiftPos != OldLiftPos)
-        {
-            OldLiftPos = LiftPos;
-        } 
-        
+        LiftPos = LiftEnc.read(); 
 
     //Write To Motor Controllers
     if (_NextMotorControllerWriteMillis < millis())
@@ -202,15 +183,17 @@ void ROBOT::Auton4()
 
 
 
-//Set inches positive, speed controlls distance
+//Set inches positive, speed controlls direction
 void ROBOT::DriveForEnc(float Inches, int16_t Speed)
 {  
     //Find inches in ticks
     Distance = ((Inches)/(3.14*4)*360);
     LeftSetpoint = Distance;
     RightSetpoint = Distance;
-        
-    //Needs to be PID Loop
+
+    //Forwards
+    if(Speed > 0)
+    {
     while(RightEnc.read() < Distance || LeftEnc.read() < Distance)
     {   
         if(RightEnc.read() < RightSetpoint)
@@ -224,6 +207,25 @@ void ROBOT::DriveForEnc(float Inches, int16_t Speed)
     }
     DriveRight.SetMotorSpeed(0); // Stop the loop once the encoders have counted up the correct number of encoder ticks.
     DriveLeft.SetMotorSpeed(0);
+    }
+    //Backwards
+    if(Speed < 0)
+    {
+    while(RightEnc.read() > Distance || LeftEnc.read() > Distance)
+    {   
+        if(RightEnc.read() > RightSetpoint)
+        {
+            DriveRight.SetMotorSpeed(Speed);
+        }
+        if(LeftEnc.read() > LeftSetpoint)
+        {
+            DriveLeft.SetMotorSpeed(Speed);
+        }
+    }
+    DriveRight.SetMotorSpeed(0); // Stop the loop once the encoders have counted up the correct number of encoder ticks.
+    DriveLeft.SetMotorSpeed(0);
+    }
+    ResetEnc();
     
 }
 
@@ -274,6 +276,8 @@ void ROBOT::TurnforEnc(int Degrees, int16_t Speed)
         }
 
     }
+    DriveRight.SetMotorSpeed(0);
+    DriveLeft.SetMotorSpeed(0);
      
 }
 
