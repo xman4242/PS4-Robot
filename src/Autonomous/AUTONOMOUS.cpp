@@ -27,15 +27,16 @@ void AUTONOMOUS::Loop()
 
 void AUTONOMOUS::ExecAuton1()
 {   
-    Serial.println("Success 1");
-    //Robot.DriveForEnc(24,-150);
-    //Robot.DriveForEnc(24,150);
-    Robot.Drive.ForAsync(1000,255,255,100);
-    Serial.println("Success 2");
+    //Diagonaly for alliance tower
+    //back and reset against wall
+    //Get purple cube
+    //corner score
 }
 void AUTONOMOUS::ExecAuton2()
 {
-    
+    //Emergency 1 Point
+    Robot.DriveForEnc(24, -150);
+    Robot.DriveForEnc(24, 150);
 }
 void AUTONOMOUS::ExecAuton3()
 {

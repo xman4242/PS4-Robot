@@ -92,7 +92,7 @@ void ROBOT::Loop()
     Yukon.DisableWatchdog();
 
     if(digitalRead(_Button0) == LOW)
-    {   
+    {    
         Serial.println("Starting");
         Auton.ToggleArmed();
         delay(1000);
