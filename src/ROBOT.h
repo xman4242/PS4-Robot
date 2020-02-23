@@ -104,7 +104,7 @@ class ROBOT
 
     static const uint8_t _Button0 = 0;
     static const uint8_t _LEDBuiltIn = 25;
-    static const uint8_t EnablePin = 33;
+    static const uint8_t EnablePin = 32;
     
   private:
       long _NextDisplayMillis = 0;

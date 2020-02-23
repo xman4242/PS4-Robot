@@ -34,7 +34,7 @@ void ROBOT::Setup()
 
     pinMode(_Button0, INPUT_PULLUP);
     pinMode(_LEDBuiltIn, OUTPUT);
-    pinMode(EnablePin, INPUT);
+    pinMode(EnablePin, INPUT_PULLUP);
     digitalWrite(_LEDBuiltIn, LOW);
 }
 bool dumpsterfire = false;
@@ -94,20 +94,8 @@ void ROBOT::Loop()
         delay(1000);
     }
     //Read The Sensors
-    EnableVal = digitalRead(EnablePin);
-    State.AutonLightSensorActive = EnableVal;
-    Yukon.DisableWatchdog();
-    
-    if((EnableVal) && AutoRunning == true)
-    {
-        if(AutonNum ==1)
-        Auton1();
-        AutoRunning == false;
-    }
-
-        LeftPos = (LeftEnc.read())*-1;
-        RightPos = (RightEnc.read())*-1;
-        LiftPos = LiftEnc.read(); 
+    uint16_t LightSensorVal = digitalRead(EnablePin);
+    State.AutonLightSensorActive = (LightSensorVal = 1);
 
     //Write To Motor Controllers
     if (_NextMotorControllerWriteMillis < millis())
@@ -135,7 +123,7 @@ void ROBOT::Loop()
             Yukon.OLED.println(LiftEnc.read());
             Yukon.OLED.display();
         }
-        else if (Armed)
+        else if (Auton.IsArmed())
         {
             Yukon.OLED.clearDisplay();
             Yukon.OLED.setCursor(0, 0);
@@ -143,7 +131,7 @@ void ROBOT::Loop()
             Yukon.OLED.print("ARMED");
             //Yukon.OLED.println(EnableVal);
             Yukon.OLED.setTextSize(1);
-            Yukon.OLED.print(AutonNum);
+            Yukon.OLED.print(Auton.QueuedProgramName());
             Yukon.OLED.display();
         }
         
@@ -423,20 +411,12 @@ void ROBOT::READPS4()
                     PrecisionMode = !PrecisionMode;
                 }
 
-                if(PS4.data.button.down == 1)
-                {
-                    Auton.ToggleArmed();
-                }
-
-                if(PS4.data.button.right == 1)
-                {
-                    Auton.QueueNext();
-                }
-
-                if(PS4.data.button.left == 1)
-                {
-                    Auton.QueuePrev();
-                }
+                if (PS4.data.button.left == 1)
+                Auton.QueuePrev();
+                if (PS4.data.button.right == 1)
+                Auton.QueueNext();
+                if (PS4.data.button.down == 1)
+                Auton.ToggleArmed();
 
                 if(PS4.data.button.options == 1)
                 {
