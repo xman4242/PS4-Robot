@@ -86,16 +86,19 @@ void ROBOT::Loop()
         _NextControllerMillis = millis() + 5;
     }
     
-    
-    if(digitalRead(_Button0) == LOW)
-    {
-        digitalWrite(_LEDBuiltIn, HIGH);
-        Yukon.SetupWIFI();
-        delay(1000);
-    }
     //Read The Sensors
     uint16_t LightSensorVal = digitalRead(EnablePin);
     State.AutonLightSensorActive = (LightSensorVal = 1);
+    Yukon.DisableWatchdog();
+
+    if(digitalRead(_Button0) == LOW)
+    {   
+        Serial.println("Starting");
+        Auton.ToggleArmed();
+        delay(1000);
+        Auton.QueueNext();
+        State.AutonLightSensorActive = true;
+    }
 
     //Write To Motor Controllers
     if (_NextMotorControllerWriteMillis < millis())
@@ -111,6 +114,7 @@ void ROBOT::Loop()
     if (_NextDisplayMillis < millis())
     {
         _NextDisplayMillis = millis() + 250;
+
         if(DebugMode)
         {
             Yukon.OLED.clearDisplay();
@@ -123,30 +127,46 @@ void ROBOT::Loop()
             Yukon.OLED.println(LiftEnc.read());
             Yukon.OLED.display();
         }
+
+        if(Auton.IsArmLocked())
+        {
+            Yukon.OLED.clearDisplay();
+            Yukon.OLED.setCursor(0, 0);
+            Yukon.OLED.setTextSize(2);
+
+            Yukon.OLED.println("LOCKED! ");
+
+            Yukon.OLED.setTextSize(1);
+            Yukon.OLED.print(Auton.QueuedProgramName());
+
+            Yukon.OLED.display();
+        }
+
         else if (Auton.IsArmed())
         {
             Yukon.OLED.clearDisplay();
             Yukon.OLED.setCursor(0, 0);
             Yukon.OLED.setTextSize(2);
-            Yukon.OLED.print("ARMED");
-            //Yukon.OLED.println(EnableVal);
+
+            Yukon.OLED.print("ARMED ");
+            Yukon.OLED.println(LightSensorVal);
             Yukon.OLED.setTextSize(1);
             Yukon.OLED.print(Auton.QueuedProgramName());
+
             Yukon.OLED.display();
         }
-        
-        else if(AutoRunning)
+
+        else if(Auton.QueuedProgramName() != "")
         {
-             Yukon.OLED.clearDisplay();
+            Yukon.OLED.clearDisplay();
             Yukon.OLED.setCursor(0, 0);
             Yukon.OLED.setTextSize(2);
-            Yukon.OLED.print("Running");
-            //Yukon.OLED.println(EnableVal);
-            Yukon.OLED.setTextSize(1);
-            Yukon.OLED.print(AutonNum);
+
+            Yukon.OLED.print(Auton.QueuedProgramName());
+
             Yukon.OLED.display();
         }
-        
+
         else
         {
             Yukon.OLED.clearDisplay();
@@ -161,34 +181,6 @@ void ROBOT::Loop()
         }
     }
 }
-
-void ROBOT::Auton1()
-{   
-    ResetEnc();
-    //DriveForEnc(24,-150);
-    DriveRight.SetMotorSpeed(-200); 
-    DriveLeft.SetMotorSpeed(-200);
-    delay(3000);
-    DriveLeft.SetMotorSpeed(0);
-    DriveRight.SetMotorSpeed(0); 
-    ResetEnc();
-    DriveForEnc(24, 150);
-    EndAuton();
-}
-
-void ROBOT::Auton2()
-{
-   
-}
-void ROBOT::Auton3()
-{
-
-}
-void ROBOT::Auton4()
-{   
-     
-}
-
 
 
 //Set inches positive, speed controlls direction
@@ -385,7 +377,7 @@ void ROBOT::READXBOX()
 
 void ROBOT::READPS4()
 {
-     DriveLeftSpeed = (PS4.data.analog.stick.ly)*2;
+            DriveLeftSpeed = (PS4.data.analog.stick.ly)*2;
             DriveRightSpeed = (PS4.data.analog.stick.ry)*2;
 
             if(abs(DriveLeftSpeed) < 11)
@@ -396,27 +388,29 @@ void ROBOT::READPS4()
             if(abs(DriveRightSpeed) < 11)
             {
                 DriveRightSpeed = 0;
-            }   
+            }
+
+            if(PrecisionMode)
+            {
+                DriveLeftSpeed = PS4.data.analog.stick.ly;
+                DriveRightSpeed = PS4.data.analog.stick.ry;
+            }
            
-            LiftSpeed = (PS4.data.analog.button.r2)-(PS4.data.analog.button.l2);
-            ClawSpeed = (PS4.data.button.r1-PS4.data.button.l1)*255;
+            LiftSpeed = (PS4.data.analog.button.l2)-(PS4.data.analog.button.r2);
+            ClawSpeed = (PS4.data.button.l1-PS4.data.button.l2)*255;
             Drive.OISetSpeed(DriveLeftSpeed,DriveRightSpeed);
             Lift.OISetSpeed(LiftSpeed);
             Claw.OISetSpeed(ClawSpeed);
+
+            if(_NextModeMillis < millis())
+            {
+                if(PS4.data.button.circle == 1) PrecisionMode = !PrecisionMode;
             
+                if (PS4.data.button.left == 1) Auton.QueuePrev();
 
- 
-                if(PS4.data.button.circle == 1)
-                {
-                    PrecisionMode = !PrecisionMode;
-                }
+                if (PS4.data.button.right == 1) Auton.QueueNext();
 
-                if (PS4.data.button.left == 1)
-                Auton.QueuePrev();
-                if (PS4.data.button.right == 1)
-                Auton.QueueNext();
-                if (PS4.data.button.down == 1)
-                Auton.ToggleArmed();
+                if (PS4.data.button.down == 1) Auton.ToggleArmed();
 
                 if(PS4.data.button.options == 1)
                 {
@@ -427,13 +421,7 @@ void ROBOT::READPS4()
                 {
                     AutoRunning = true;
                 }
+                _NextModeMillis = millis() + 75;
+            }
 
-                 if(PrecisionMode)
-                {
-                DriveLeftSpeed = PS4.data.analog.stick.ly;
-                DriveRightSpeed = PS4.data.analog.stick.ry;
-                }
-            
-
-            
 }
