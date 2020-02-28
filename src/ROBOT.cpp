@@ -11,8 +11,7 @@ ROBOT::ROBOT(YETI_YUKON &rYukon) : Yukon(rYukon),
     Drive(*this),
     Lift(*this),
     Claw(*this),
-    Auton(*this),
-    Xbox(&Usb)
+    Auton(*this)
     
         
     
@@ -22,7 +21,6 @@ ROBOT::ROBOT(YETI_YUKON &rYukon) : Yukon(rYukon),
 
 void ROBOT::Setup()
 {   
-    Usb.Init();
     DriveLeft.Init();
     DriveRight.Init();
     LiftMotor.Init();
@@ -31,7 +29,8 @@ void ROBOT::Setup()
     Serial.println("PS4 Ready");
     LeftEnc.write(0);
     RightEnc.write(0);
-
+    LiftEnc.write(0);
+    
     pinMode(_Button0, INPUT_PULLUP);
     pinMode(_LEDBuiltIn, OUTPUT);
     pinMode(EnablePin, INPUT_PULLUP);
@@ -88,16 +87,15 @@ void ROBOT::Loop()
     
     //Read The Sensors
     uint16_t LightSensorVal = digitalRead(EnablePin);
-    State.AutonLightSensorActive = (LightSensorVal = 1);
+    if(LightSensorVal == 1 || EnableVal) State.AutonLightSensorActive = true;
     Yukon.DisableWatchdog();
 
     if(digitalRead(_Button0) == LOW)
     {    
-        Serial.println("Starting");
         Auton.ToggleArmed();
-        delay(1000);
         Auton.QueueNext();
         State.AutonLightSensorActive = true;
+        //DriveForEnc(24,200);
     }
 
     //Write To Motor Controllers
@@ -121,10 +119,10 @@ void ROBOT::Loop()
             Yukon.OLED.setCursor(0, 0);
             Yukon.OLED.setTextSize(1);
             Yukon.OLED.print("Right Enc");
-            Yukon.OLED.println(RightEnc.read());
+            Yukon.OLED.println(GetRightEnc());
             Yukon.OLED.setTextSize(1); 
             Yukon.OLED.print("Lift Enc");
-            Yukon.OLED.println(LiftEnc.read());
+            Yukon.OLED.println(GetLiftEnc());
             Yukon.OLED.display();
         }
 
@@ -187,37 +185,43 @@ void ROBOT::Loop()
 void ROBOT::DriveForEnc(float Inches, int16_t Speed)
 {  
     //Find inches in ticks
+    Serial.println("1");
     Distance = ((Inches)/(3.14*4)*360);
+    Serial.println("2");
     LeftSetpoint = Distance;
     RightSetpoint = Distance;
 
     //Forwards
     if(Speed > 0)
-    {
-    while(RightEnc.read() < Distance || LeftEnc.read() < Distance)
+    {Serial.println("3");
+    while(GetRightEnc() < Distance || GetLeftEnc() < Distance)
     {   
-        if(RightEnc.read() < RightSetpoint)
+        Serial.println("4");
+        if(GetRightEnc() < RightSetpoint)
         {
             DriveRight.SetMotorSpeed(Speed);
         }
-        if(LeftEnc.read() < LeftSetpoint)
+
+        if(GetLeftEnc() < LeftSetpoint)
         {
             DriveLeft.SetMotorSpeed(Speed);
         }
+        
     }
+    Serial.println("Stopped");
     DriveRight.SetMotorSpeed(0); // Stop the loop once the encoders have counted up the correct number of encoder ticks.
     DriveLeft.SetMotorSpeed(0);
     }
     //Backwards
     if(Speed < 0)
     {
-    while(RightEnc.read() > Distance || LeftEnc.read() > Distance)
+    while(GetRightEnc() > Distance || GetLeftEnc() > Distance)
     {   
-        if(RightEnc.read() > Distance)
+        if(GetRightEnc() > Distance)
         {
             DriveRight.SetMotorSpeed(Speed);
         }
-        if(LeftEnc.read() > Distance)
+        if(GetLeftEnc() > Distance)
         {
             DriveLeft.SetMotorSpeed(Speed);
         }
@@ -235,19 +239,23 @@ void ROBOT::TurnforEnc(int Degrees, int16_t Speed)
 {                                                   
     float TicksInDeg = 6.7;
     int Setpoint = abs(Degrees) * TicksInDeg;
-
+    
     if(Degrees > 0)
     {   RightSetpoint = Setpoint * -1;
         LeftSetpoint = Setpoint;
-        while(RightEnc.read() > RightSetpoint || LeftEnc.read() < LeftSetpoint)
+        Serial.print("Right Set");
+        Serial.println(RightSetpoint);
+        Serial.print("Left Set");
+        Serial.println(LeftSetpoint);
+        while(GetRightEnc() > RightSetpoint || GetLeftEnc() < LeftSetpoint)
         {   
             
-            if(RightEnc.read() > Setpoint)
+            if(GetRightEnc() > Setpoint)
             {
                 DriveRight.SetMotorSpeed(Speed * -1);
             }
 
-            if(LeftEnc.read() < Setpoint)
+            if(GetLeftEnc() < Setpoint)
             {
                 DriveLeft.SetMotorSpeed(Speed);
             }
@@ -261,14 +269,14 @@ void ROBOT::TurnforEnc(int Degrees, int16_t Speed)
     {   
         RightSetpoint = Setpoint;
         LeftSetpoint = Setpoint * -1;
-        while(RightEnc.read() < Setpoint || LeftEnc.read() > Setpoint)
+        while(GetRightEnc() < Setpoint || GetLeftEnc() > Setpoint)
         {   
-            if(RightEnc.read() < Setpoint)
+            if(GetRightEnc() < Setpoint)
             {
                 DriveRight.SetMotorSpeed(Speed);
             }
 
-            if(LeftEnc.read() > Setpoint)
+            if(GetLeftEnc() > Setpoint)
             {
                 DriveLeft.SetMotorSpeed(Speed * -1);
             }
@@ -288,7 +296,7 @@ void ROBOT::LiftForEnc(float Inches, int16_t Speed)
     float TicksPerInch = 0;
     int Setpoint = Inches * TicksPerInch;
 
-    while(LiftEnc.read() < Setpoint)
+    while(GetLiftEnc() < Setpoint)
     {
         if(_NextMotorControllerWriteMillis < millis())
         {
@@ -296,7 +304,7 @@ void ROBOT::LiftForEnc(float Inches, int16_t Speed)
         } 
     }
     
-    while(LiftEnc.read() > Setpoint)
+    while(GetLiftEnc() > Setpoint)
     {
         if(_NextMotorControllerWriteMillis < millis())
         {
@@ -326,7 +334,7 @@ void ROBOT::EndAuton()
     Serial.println("Auton Ended");
 }
 
-void ROBOT::READXBOX()
+/*void ROBOT::READXBOX()
 {
     //Read The Controller
     Usb.Task();
@@ -373,12 +381,16 @@ void ROBOT::READXBOX()
     }
     }
 
-}
+}*/
 
 void ROBOT::READPS4()
 {
             DriveLeftSpeed = (PS4.data.analog.stick.ly)*2;
             DriveRightSpeed = (PS4.data.analog.stick.ry)*2;
+
+            if(DriveRightSpeed < -255) DriveRightSpeed = -255;
+            if(DriveLeftSpeed < -255) DriveLeftSpeed = -255;
+
 
             if(abs(DriveLeftSpeed) < 11)
             {
@@ -396,8 +408,8 @@ void ROBOT::READPS4()
                 DriveRightSpeed = PS4.data.analog.stick.ry;
             }
            
-            LiftSpeed = (PS4.data.analog.button.l2)-(PS4.data.analog.button.r2);
-            ClawSpeed = (PS4.data.button.l1-PS4.data.button.l2)*255;
+            LiftSpeed = (PS4.data.analog.button.r2)-(PS4.data.analog.button.l2);
+            ClawSpeed = (PS4.data.button.l1-PS4.data.button.r1)*255;
             Drive.OISetSpeed(DriveLeftSpeed,DriveRightSpeed);
             Lift.OISetSpeed(LiftSpeed);
             Claw.OISetSpeed(ClawSpeed);
@@ -419,9 +431,24 @@ void ROBOT::READPS4()
 
                 if(PS4.data.button.up == 1)
                 {
-                    AutoRunning = true;
+                    EnableVal = true;
                 }
                 _NextModeMillis = millis() + 75;
             }
 
+}
+
+int32_t ROBOT::GetLeftEnc()
+{
+    return LeftEnc.read();
+}
+
+int32_t ROBOT::GetRightEnc()
+{
+    return RightEnc.read();
+}
+
+int32_t ROBOT::GetLiftEnc()
+{
+    return LiftEnc.read();
 }

@@ -5,7 +5,6 @@
 #define ErrorPercent .05 //This is the percentage around the setpoint it will check for completion. Do not change unless you know what you are doing!
 #include <Encoder.h>
 #include <YETI_YUKON.h>
-#include <XBOXRECV.h>
 #include <STATE.h>
 #include <PS4Controller.h>
 #include <esp_bt_main.h>
@@ -24,10 +23,9 @@ class ROBOT
 
     void Setup();
     void Loop();
-    void Auton1();
-    void Auton2();
-    void Auton3();
-    void Auton4();
+    IRAM_ATTR int32_t GetLeftEnc();
+    IRAM_ATTR int32_t GetRightEnc();
+    IRAM_ATTR int32_t GetLiftEnc();
     void DriveForEnc(float Inches, int16_t Speed);
     void TurnforEnc(int Degrees , int16_t Speed);
     void LiftForEnc(float Inches, int16_t Speed);
@@ -59,8 +57,7 @@ class ROBOT
     CLAW Claw;
     AUTONOMOUS Auton;
     //USB
-    USB Usb;
-    XBOXRECV Xbox;
+  
 
     //Vars
     int ErrorAmt = 0;
