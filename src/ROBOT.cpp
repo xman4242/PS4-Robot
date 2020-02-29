@@ -183,7 +183,11 @@ void ROBOT::Loop()
 
 void ROBOT::Auton1()
 {   
-    DriveForEnc(200,150);
+    //Line up diagonal
+    //Go straight to tower
+    //Get 2 cubes
+    //Stack in small zone
+    LiftForEnc(8,150);
 }
 
 void ROBOT::Auton2()
@@ -249,6 +253,9 @@ void ROBOT::DriveForEnc(float Inches, int16_t Speed)
         {
             DriveLeft.SetMotorSpeed(Speed);
         }
+
+        yield();
+        delay(1);
     }
     DriveRight.SetMotorSpeed(0); // Stop the loop once the encoders have counted up the correct number of encoder ticks.
     DriveLeft.SetMotorSpeed(0);

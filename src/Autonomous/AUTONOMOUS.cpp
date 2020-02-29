@@ -27,23 +27,25 @@ void AUTONOMOUS::Loop()
 
 void AUTONOMOUS::ExecAuton1()
 {   
-    if(IsArmed()) ToggleArmed();
+    _AutonARMED = false;
     Serial.println("Auton 1");
-    delay(5000);
     Robot.Auton1();
 }
 void AUTONOMOUS::ExecAuton2()
 {   
-    if(IsArmed()) ToggleArmed();
+    _AutonARMED = false;
+    Serial.println("Auton 2");
     Robot.Auton2();
 }
 void AUTONOMOUS::ExecAuton3()
 {
-    if(IsArmed()) ToggleArmed();
+    _AutonARMED = false;
+    Serial.println("Auton 3");
     Robot.Auton3();
 }
 void AUTONOMOUS::ExecAuton4()
 {
-    if(IsArmed()) ToggleArmed();
+    _AutonARMED = false;
+    Serial.println("Auton 4");
     Robot.Auton4();
 }
