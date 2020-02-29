@@ -27,25 +27,23 @@ void AUTONOMOUS::Loop()
 
 void AUTONOMOUS::ExecAuton1()
 {   
-    //Diagonaly for tower
-    //back and reset against wall
-    //Get 2 cubes
-    //corner score
-    Serial.println("Auton1");
-    Robot.DriveForEnc(24,150);
-    //Robot.TurnforEnc(90,150);
+    if(IsArmed()) ToggleArmed();
+    Serial.println("Auton 1");
+    delay(5000);
+    Robot.Auton1();
 }
 void AUTONOMOUS::ExecAuton2()
-{
-    //Emergency 1 Point
-    Robot.DriveForEnc(24, -150);
-    Robot.DriveForEnc(24, 150);
+{   
+    if(IsArmed()) ToggleArmed();
+    Robot.Auton2();
 }
 void AUTONOMOUS::ExecAuton3()
 {
-
+    if(IsArmed()) ToggleArmed();
+    Robot.Auton3();
 }
 void AUTONOMOUS::ExecAuton4()
 {
-
+    if(IsArmed()) ToggleArmed();
+    Robot.Auton4();
 }

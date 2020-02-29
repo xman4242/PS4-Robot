@@ -23,6 +23,10 @@ class ROBOT
 
     void Setup();
     void Loop();
+    void Auton1();
+    void Auton2();
+    void Auton3();
+    void Auton4();
     IRAM_ATTR int32_t GetLeftEnc();
     IRAM_ATTR int32_t GetRightEnc();
     IRAM_ATTR int32_t GetLiftEnc();

@@ -181,22 +181,43 @@ void ROBOT::Loop()
 }
 
 
+void ROBOT::Auton1()
+{   
+    DriveForEnc(200,150);
+}
+
+void ROBOT::Auton2()
+{
+    //Emergency 1 Point
+    DriveForEnc(24, -150);
+    DriveForEnc(24, 150);
+}
+
+void ROBOT::Auton3()
+{
+
+}
+
+void ROBOT::Auton4()
+{
+
+}
 //Set inches positive, speed controlls direction
 void ROBOT::DriveForEnc(float Inches, int16_t Speed)
 {  
     //Find inches in ticks
-    Serial.println("1");
     Distance = ((Inches)/(3.14*4)*360);
-    Serial.println("2");
     LeftSetpoint = Distance;
     RightSetpoint = Distance;
-
+    ResetEnc();
     //Forwards
     if(Speed > 0)
-    {Serial.println("3");
+    {
+    int start_time = millis();
     while(GetRightEnc() < Distance || GetLeftEnc() < Distance)
     {   
-        Serial.println("4");
+        
+        Serial.println(millis() - start_time);
         if(GetRightEnc() < RightSetpoint)
         {
             DriveRight.SetMotorSpeed(Speed);
@@ -206,11 +227,14 @@ void ROBOT::DriveForEnc(float Inches, int16_t Speed)
         {
             DriveLeft.SetMotorSpeed(Speed);
         }
+        yield();
+        delay(1);
         
     }
     Serial.println("Stopped");
     DriveRight.SetMotorSpeed(0); // Stop the loop once the encoders have counted up the correct number of encoder ticks.
     DriveLeft.SetMotorSpeed(0);
+    
     }
     //Backwards
     if(Speed < 0)
@@ -229,7 +253,7 @@ void ROBOT::DriveForEnc(float Inches, int16_t Speed)
     DriveRight.SetMotorSpeed(0); // Stop the loop once the encoders have counted up the correct number of encoder ticks.
     DriveLeft.SetMotorSpeed(0);
     }
-    ResetEnc();
+    
     
 }
 
@@ -239,7 +263,8 @@ void ROBOT::TurnforEnc(int Degrees, int16_t Speed)
 {                                                   
     float TicksInDeg = 6.7;
     int Setpoint = abs(Degrees) * TicksInDeg;
-    
+    ResetEnc();
+
     if(Degrees > 0)
     {   RightSetpoint = Setpoint * -1;
         LeftSetpoint = Setpoint;
@@ -260,6 +285,8 @@ void ROBOT::TurnforEnc(int Degrees, int16_t Speed)
                 DriveLeft.SetMotorSpeed(Speed);
             }
             
+            yield();
+            delay(1);
             
         }
 
@@ -280,13 +307,14 @@ void ROBOT::TurnforEnc(int Degrees, int16_t Speed)
             {
                 DriveLeft.SetMotorSpeed(Speed * -1);
             }
-    
+
+            yield();
+            delay(1);
         }
 
     }
     DriveRight.SetMotorSpeed(0);
     DriveLeft.SetMotorSpeed(0);
-     
 }
 
 //Make inches Positve to go up, negative to go down
@@ -295,13 +323,17 @@ void ROBOT::LiftForEnc(float Inches, int16_t Speed)
 {
     float TicksPerInch = 0;
     int Setpoint = Inches * TicksPerInch;
+    ResetEnc();
 
     while(GetLiftEnc() < Setpoint)
     {
         if(_NextMotorControllerWriteMillis < millis())
         {
             LiftMotor.SetMotorSpeed(Speed);
-        } 
+        }
+
+        yield();
+        delay(1); 
     }
     
     while(GetLiftEnc() > Setpoint)
@@ -310,8 +342,11 @@ void ROBOT::LiftForEnc(float Inches, int16_t Speed)
         {
             LiftMotor.SetMotorSpeed(Speed * -1);
         }
+
+        yield();
+        delay(1);
     }
-    ResetEnc();
+   
 }
 
 //Resets the encoders. Is automatically called, but you can call it if you want to be safe
