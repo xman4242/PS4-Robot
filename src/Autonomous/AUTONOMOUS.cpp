@@ -27,25 +27,45 @@ void AUTONOMOUS::Loop()
 
 void AUTONOMOUS::ExecAuton1()
 {   
-    _AutonARMED = false;
-    Serial.println("Auton 1");
-    Robot.Auton1();
+    //Line up diagonal
+    //Go straight to tower
+    //Cube in corner
+    //Blue
+    Robot.Lift.ForAsync(6000,255,100);
+    Robot.Drive.ForAsync(280,200,200,100);
+    Robot.Claw.ForAsync(3000,255,100);
+    Robot.Drive.ForAsync(1500,-200,-200,100);
+    Robot.Drive.ForAsync(500,200,200,100);
+    Robot.Drive.ForAsync(1300,200,-200,100);
+    Robot.Drive.ForAsync(1000,200,200,100);
+    Robot.Drive.ForAsync(700,200,200,100);
+    Robot.Drive.ForAsync(500,-200,-200,100); 
+
+    //Robot.Drive.ForAsync( )
 }
 void AUTONOMOUS::ExecAuton2()
-{   
-    _AutonARMED = false;
-    Serial.println("Auton 2");
-    Robot.Auton2();
+{    
+    //Line up diagonal
+    //Go straight to tower
+    //Cube in corner
+    //REd
+    Robot.Lift.ForAsync(7500,255,100);
+    Robot.Drive.ForAsync(280,200,200,100);
+    Robot.Claw.ForAsync(3000,255,100);
+    Robot.Drive.ForAsync(1500,-200,-200,100);
+    Robot.Drive.ForAsync(500,200,200,100);
+    Robot.Drive.ForAsync(1100,-200,200,100);
+    Robot.Drive.ForAsync(1000,200,200,100);
+    Robot.Drive.ForAsync(700,200,200,100);
+    Robot.Drive.ForAsync(500,-200,-200,100);
 }
 void AUTONOMOUS::ExecAuton3()
 {
-    _AutonARMED = false;
-    Serial.println("Auton 3");
-    Robot.Auton3();
+    Robot.Drive.ForAsync(1500,-200,-200,100);
+    Robot.Drive.ForAsync(750,200,200,100);
 }
 void AUTONOMOUS::ExecAuton4()
 {
-    _AutonARMED = false;
-    Serial.println("Auton 4");
-    Robot.Auton4();
+   Robot.DriveForEnc(24,200);
+   //Robot.TurnforEnc(90,200);
 }

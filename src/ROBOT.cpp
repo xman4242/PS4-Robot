@@ -25,8 +25,11 @@ void ROBOT::Setup()
     DriveRight.Init();
     LiftMotor.Init();
     ClawMotor.Init();
-    PS4.begin("20:20:20:20:20:20"); 
-    Serial.println("PS4 Ready");
+    
+    if(PS4.begin("03:03:03:03:03:03"))
+    {
+        Serial.println("PS4 Ready");
+    }
     LeftEnc.write(0);
     RightEnc.write(0);
     LiftEnc.write(0);
@@ -92,10 +95,9 @@ void ROBOT::Loop()
 
     if(digitalRead(_Button0) == LOW)
     {    
+        /*Auton.QueueNext();
         Auton.ToggleArmed();
-        Auton.QueueNext();
-        State.AutonLightSensorActive = true;
-        //DriveForEnc(24,200);
+        State.AutonLightSensorActive = true;*/
     }
 
     //Write To Motor Controllers
@@ -177,35 +179,21 @@ void ROBOT::Loop()
             Yukon.OLED.println(" / 16");
             Yukon.OLED.display();
         }
+
+        if(PrecisionMode)
+        {
+            PS4.setLed(0,255,0);
+        }
+
+        if(!PrecisionMode)
+        {
+            PS4.setLed(0,0,255);
+        }
+        //PS4.sendToController();
+    
     }
 }
 
-
-void ROBOT::Auton1()
-{   
-    //Line up diagonal
-    //Go straight to tower
-    //Get 2 cubes
-    //Stack in small zone
-    LiftForEnc(8,150);
-}
-
-void ROBOT::Auton2()
-{
-    //Emergency 1 Point
-    DriveForEnc(24, -150);
-    DriveForEnc(24, 150);
-}
-
-void ROBOT::Auton3()
-{
-
-}
-
-void ROBOT::Auton4()
-{
-
-}
 //Set inches positive, speed controlls direction
 void ROBOT::DriveForEnc(float Inches, int16_t Speed)
 {  
@@ -215,53 +203,40 @@ void ROBOT::DriveForEnc(float Inches, int16_t Speed)
     RightSetpoint = Distance;
     ResetEnc();
     //Forwards
-    if(Speed > 0)
-    {
+    
     int start_time = millis();
     while(GetRightEnc() < Distance || GetLeftEnc() < Distance)
     {   
-        
         Serial.println(millis() - start_time);
-        if(GetRightEnc() < RightSetpoint)
+        if(GetRightEnc() < Distance)
         {
             DriveRight.SetMotorSpeed(Speed);
         }
 
-        if(GetLeftEnc() < LeftSetpoint)
+        if(GetLeftEnc() < Distance)
         {
             DriveLeft.SetMotorSpeed(Speed);
         }
         yield();
-        delay(1);
-        
-    }
-    Serial.println("Stopped");
-    DriveRight.SetMotorSpeed(0); // Stop the loop once the encoders have counted up the correct number of encoder ticks.
-    DriveLeft.SetMotorSpeed(0);
-    
+        delay(10);
     }
     //Backwards
-    if(Speed < 0)
-    {
     while(GetRightEnc() > Distance || GetLeftEnc() > Distance)
     {   
         if(GetRightEnc() > Distance)
         {
-            DriveRight.SetMotorSpeed(Speed);
+            DriveRight.SetMotorSpeed(Speed * -1);
         }
         if(GetLeftEnc() > Distance)
         {
-            DriveLeft.SetMotorSpeed(Speed);
+            DriveLeft.SetMotorSpeed(Speed * -1);
         }
 
         yield();
-        delay(1);
+        delay(10);
     }
     DriveRight.SetMotorSpeed(0); // Stop the loop once the encoders have counted up the correct number of encoder ticks.
     DriveLeft.SetMotorSpeed(0);
-    }
-    
-    
 }
 
 //Degrees is positive to go clockwise, and negative to go counterclockwise
@@ -458,8 +433,10 @@ void ROBOT::READPS4()
 
             if(_NextModeMillis < millis())
             {
-                if(PS4.data.button.circle == 1) PrecisionMode = !PrecisionMode;
-            
+                if(PS4.data.button.circle == 1) 
+                {
+                    PrecisionMode = !PrecisionMode;
+                }
                 if (PS4.data.button.left == 1) Auton.QueuePrev();
 
                 if (PS4.data.button.right == 1) Auton.QueueNext();
@@ -475,7 +452,7 @@ void ROBOT::READPS4()
                 {
                     EnableVal = true;
                 }
-                _NextModeMillis = millis() + 75;
+                _NextModeMillis = millis() + 150;
             }
 
 }
